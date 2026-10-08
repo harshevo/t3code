@@ -141,10 +141,11 @@ test(
       };
       const host = memoryHost(resolve(workspace, "memory.sqlite"), true);
       host.user(agent, "first-message", "Fix sqlite transactions.");
+      host.user(agent, "second-message", "Do not publish.");
       host.result(agent, "large-result", 'sqlite 🧠 \\"'.repeat(14000));
       const context = await host.assemble(agent);
       assert.equal(context.goal, "Fix sqlite transactions.");
-      assert.equal(context.user_request_count, 1);
+      assert.equal(context.user_request_count, 2);
       const result = context.recent_tool_observations.find(
         (item) => item.source === "large-result",
       );

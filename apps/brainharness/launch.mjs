@@ -3,11 +3,9 @@ import { access, mkdir, readFile, writeFile, rename } from "node:fs/promises";
 import { join, resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { homedir } from "node:os";
+import { resolveDataHome } from "./data-home.mjs";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
-const home = resolve(process.env.BH_HOME || join(homedir(), ".brainharness/t3"));
-const liveHome = join(homedir(), ".t3");
-if (home === liveHome || home.startsWith(liveHome + "/"))
-  throw new Error("Use a separate BrainHarness home; ~/.t3 contains live data");
+const home = await resolveDataHome(process.env.BH_HOME || join(homedir(), ".brainharness/t3"));
 const memoryBinary = resolve(
   process.env.BH_MEMORY_BINARY || join(root, "../../target/debug/brain-memory"),
 );
