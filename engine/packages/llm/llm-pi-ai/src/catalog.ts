@@ -223,7 +223,16 @@ export function catalogProviderIds(): readonly string[] {
 export function catalogModels(provider: string): Map<string, Model<Api>> {
   if (!catalogProviders().has(provider)) return new Map();
   const models = getBuiltinModels(provider as BuiltinProvider) as Model<Api>[];
-  return new Map(models.map((model) => [model.id, model]));
+  const indexed = new Map(models.map((model) => [model.id, model]));
+  // The host's Codex catalog advertises GPT-6.1 Sol before pi-ai's bundled
+  // catalog has caught up. It uses the same Codex Responses route and model
+  // capabilities as GPT-6 Sol; prefer the upstream entry automatically once
+  // pi-ai ships its own metadata.
+  const codexSol = indexed.get("gpt-6-sol");
+  if (provider === "openai-codex" && codexSol !== undefined && !indexed.has("gpt-6.1-sol")) {
+    indexed.set("gpt-6.1-sol", { ...codexSol, id: "gpt-6.1-sol", name: "GPT-6.1 Sol" });
+  }
+  return indexed;
 }
 
 /**

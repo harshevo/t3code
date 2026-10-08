@@ -149,7 +149,12 @@ export function catalogProviderIds() {
 export function catalogModels(provider) {
   if (!catalogProviders().has(provider)) return new Map();
   const models = getBuiltinModels(provider);
-  return new Map(models.map((model) => [model.id, model]));
+  const indexed = new Map(models.map((model) => [model.id, model]));
+  const codexSol = indexed.get("gpt-6-sol");
+  if (provider === "openai-codex" && codexSol !== undefined && !indexed.has("gpt-6.1-sol")) {
+    indexed.set("gpt-6.1-sol", { ...codexSol, id: "gpt-6.1-sol", name: "GPT-6.1 Sol" });
+  }
+  return indexed;
 }
 /**
  * Disposition of every `OpenAICompletionsCompat` field. The `Record` key type
