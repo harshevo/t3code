@@ -68,15 +68,15 @@ const BRAINHARNESS_CONNECTION_FIELDS: readonly ProviderEnvironmentFieldDefinitio
   {
     name: "BH_PROVIDER",
     label: "Model provider",
-    placeholder: "openai",
+    placeholder: "openai-codex",
     sensitive: false,
     description:
-      "Use openai, openai-codex for ChatGPT sign-in, anthropic, google, openrouter, or gateway for a custom endpoint.",
+      "Use openai-codex for ChatGPT sign-in, openai for an API key, anthropic, google, openrouter, or gateway for a custom endpoint.",
   },
   {
     name: "BH_MODEL",
     label: "Default model",
-    placeholder: "gpt-5.4",
+    placeholder: "gpt-5.6-sol",
     sensitive: false,
     description: "Model ID from your provider. The chat model selector can override this.",
   },

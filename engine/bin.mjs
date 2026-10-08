@@ -20,7 +20,7 @@ process.env.DSH_HOME =
 const memoryBinary =
   process.env.BH_MEMORY_BINARY || resolve(root, "../../../target/debug/brain-memory");
 const engineProviders = Object.fromEntries(catalogProviderIds().map((id) => [id, {}]));
-const provider = process.env.BH_PROVIDER || "openai";
+const provider = process.env.BH_PROVIDER || "openai-codex";
 if (process.env.BH_BASE_URL) {
   engineProviders[provider] = {
     baseURL: process.env.BH_BASE_URL,
@@ -28,7 +28,7 @@ if (process.env.BH_BASE_URL) {
     apiKeyEnv: process.env.BH_API_KEY_ENV || "BH_API_KEY",
     models: [
       {
-        id: process.env.BH_MODEL || "default",
+        id: process.env.BH_MODEL || "gpt-5.6-sol",
         contextWindow: Number(process.env.BH_CONTEXT_WINDOW || 128000),
         maxTokens: Number(process.env.BH_MAX_TOKENS || 8192),
       },

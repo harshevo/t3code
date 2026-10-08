@@ -40,9 +40,18 @@ if (!settings.providerInstances.brainharness) {
   settings.branchNamePrefix ??= "brain";
   settings.defaultModelSelection ??= {
     instanceId: "brainharness",
-    model: JSON.stringify([process.env.BH_PROVIDER || "openai", process.env.BH_MODEL || "gpt-5.4"]),
+    model: JSON.stringify([
+      process.env.BH_PROVIDER || "openai-codex",
+      process.env.BH_MODEL || "gpt-5.6-sol",
+    ]),
     options: [],
   };
+}
+if (
+  settings.defaultModelSelection?.instanceId === "brainharness" &&
+  settings.defaultModelSelection.model === JSON.stringify(["openai", "gpt-5.4"])
+) {
+  settings.defaultModelSelection.model = JSON.stringify(["openai-codex", "gpt-5.6-sol"]);
 }
 const instance = settings.providerInstances.brainharness;
 if (instance.driver !== "acpRegistry")
