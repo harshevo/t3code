@@ -3,3 +3,6 @@
 # Batch files need CRLF for cmd.exe to parse them reliably.
 *.cmd text eol=crlf
 *.bat text eol=crlf
+
+# Vendored compiler output retains upstream emitter whitespace.
+engine/**/lib/** whitespace=-blank-at-eol

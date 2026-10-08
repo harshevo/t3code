@@ -1160,6 +1160,7 @@ interface ActiveAcpTurn {
       }
     | undefined;
   contextUsage: ThreadTokenUsageSnapshot | null;
+  usageReportedInTurn?: boolean;
   nativeMetadata: OrchestrationV2ProviderThreadNativeMetadata | null;
   readonly tools: Map<string, AcpToolCallState>;
   readonly toolStartedAt: Map<string, DateTime.Utc>;
@@ -4086,6 +4087,18 @@ export function makeAcpAdapterV2(
               );
               if (context?.nativeThreadId === notification.sessionId) {
                 context.contextUsage = stateEvent.usage;
+                context.usageReportedInTurn = true;
+                const reportedAt = yield* DateTime.now;
+                const providerTurn = providerTurnPayload(context, "running", null, reportedAt);
+                yield* Ref.update(providerTurns, (current) =>
+                  new Map(current).set(String(providerTurn.id), providerTurn),
+                );
+                yield* emitProviderEvent({
+                  type: "provider_turn.updated",
+                  driver,
+                  threadId: context.input.threadId,
+                  providerTurn,
+                });
               }
             } else {
               const metadata = yield* Ref.modify(nativeMetadataBySessionId, (current) => {
@@ -6442,6 +6455,7 @@ export function makeAcpAdapterV2(
           context: ActiveAcpTurn,
           status: OrchestrationV2ProviderTurn["status"],
           completedAt: DateTime.Utc | null,
+          reportedAt: DateTime.Utc = completedAt ?? context.startedAt,
         ): OrchestrationV2ProviderTurn => ({
           id: context.providerTurnId,
           providerThreadId: context.input.providerThread.id,
@@ -6456,6 +6470,32 @@ export function makeAcpAdapterV2(
           status,
           startedAt: context.startedAt,
           completedAt,
+          ...(context.usageReportedInTurn && context.contextUsage
+            ? {
+                tokenUsage: { ...context.contextUsage, updatedAt: DateTime.formatIso(reportedAt) },
+                ...(context.contextUsage.inputTokens !== undefined &&
+                context.contextUsage.outputTokens !== undefined
+                  ? {
+                      turnTokenUsage: {
+                        usageStatus: "complete" as const,
+                        usageScope: "main_agent" as const,
+                        hasSubagents: context.subagents.size > 0,
+                        inputTokens: context.contextUsage.inputTokens,
+                        outputTokens: context.contextUsage.outputTokens,
+                        ...(context.contextUsage.cachedInputTokens === undefined
+                          ? {}
+                          : { cachedInputTokens: context.contextUsage.cachedInputTokens }),
+                        ...(context.contextUsage.cacheCreationTokens === undefined
+                          ? {}
+                          : { cacheCreationTokens: context.contextUsage.cacheCreationTokens }),
+                        ...(context.contextUsage.reasoningOutputTokens === undefined
+                          ? {}
+                          : { reasoningTokens: context.contextUsage.reasoningOutputTokens }),
+                      },
+                    }
+                  : {}),
+              }
+            : {}),
         });
 
         const terminalizeOpenRunOwnedItems = Effect.fnUntraced(function* (

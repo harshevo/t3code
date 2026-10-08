@@ -1584,6 +1584,7 @@ export function parseSessionUpdateEvent(params: EffectAcpSchema.SessionNotificat
       events.push({
         _tag: "UsageUpdated",
         usage: {
+          ...decodeBrainHarnessUsage(upd._meta),
           usedTokens: upd.used,
           ...(upd.size > 0 ? { maxTokens: upd.size } : {}),
           ...(upd.cost && currency ? { cost: { amount: upd.cost.amount, currency } } : {}),
@@ -1618,4 +1619,38 @@ export function parseSessionUpdateEvent(params: EffectAcpSchema.SessionNotificat
   }
 
   return { ...(modeId !== undefined ? { modeId } : {}), events };
+}
+
+function decodeBrainHarnessUsage(meta: unknown): Partial<ThreadTokenUsageSnapshot> {
+  if (!isRecord(meta) || !isRecord(meta.brainharness)) return {};
+  const raw = meta.brainharness;
+  const result: Record<string, number> = {};
+  for (const key of [
+    "inputTokens",
+    "outputTokens",
+    "cachedInputTokens",
+    "cacheCreationTokens",
+    "reasoningOutputTokens",
+    "decodeDurationMs",
+    "modelCallCount",
+    "toolUses",
+    "ttftMs",
+    "durationMs",
+  ] as const) {
+    const value = raw[key];
+    if (typeof value === "number" && Number.isSafeInteger(value) && value >= 0) result[key] = value;
+  }
+  if (
+    result.cachedInputTokens !== undefined &&
+    result.inputTokens !== undefined &&
+    result.cachedInputTokens > result.inputTokens
+  ) {
+    delete result.cachedInputTokens;
+  }
+  return {
+    ...result,
+    ...(typeof raw.contextEstimated === "boolean"
+      ? { contextEstimated: raw.contextEstimated }
+      : {}),
+  };
 }

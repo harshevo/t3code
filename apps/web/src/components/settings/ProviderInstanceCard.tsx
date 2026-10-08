@@ -64,6 +64,57 @@ import {
   type ProviderStatusKey,
 } from "./providerStatus";
 
+const BRAINHARNESS_CONNECTION_FIELDS: readonly ProviderEnvironmentFieldDefinition[] = [
+  {
+    name: "BH_PROVIDER",
+    label: "Model provider",
+    placeholder: "openai",
+    sensitive: false,
+    description:
+      "Use openai, openai-codex for ChatGPT sign-in, anthropic, google, openrouter, or gateway for a custom endpoint.",
+  },
+  {
+    name: "BH_MODEL",
+    label: "Default model",
+    placeholder: "gpt-5.4",
+    sensitive: false,
+    description: "Model ID from your provider. The chat model selector can override this.",
+  },
+  {
+    name: "BH_API_KEY",
+    label: "API key",
+    sensitive: true,
+    description: "Stored separately from settings. For OAuth providers, use Sign in instead.",
+  },
+  {
+    name: "BH_BASE_URL",
+    label: "Custom API endpoint",
+    placeholder: "http://localhost:1234/v1",
+    sensitive: false,
+    description: "Optional. Leave empty to use the provider's endpoint.",
+  },
+  {
+    name: "BH_API",
+    label: "Custom endpoint protocol",
+    placeholder: "openai-completions",
+    sensitive: false,
+    description:
+      "openai-completions, openai-responses, or anthropic-messages. Used only with a custom endpoint.",
+  },
+  {
+    name: "BH_CONTEXT_WINDOW",
+    label: "Custom model context capacity",
+    placeholder: "128000",
+    sensitive: false,
+  },
+  {
+    name: "BH_MAX_TOKENS",
+    label: "Custom model output limit",
+    placeholder: "8192",
+    sensitive: false,
+  },
+];
+
 const ENVIRONMENT_VARIABLE_NAME_PATTERN = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
 
 function ProviderStatusDiagnostic({
@@ -705,7 +756,14 @@ export function ProviderInstanceCard({
   };
   // Drivers that need a named secret (Cursor's API key) get a dedicated field;
   // the generic editor only shows the remaining variables.
-  const environmentFields = driverOption?.environmentFields ?? [];
+  const environmentFields =
+    instance.driver === "acpRegistry" &&
+    typeof instance.config === "object" &&
+    instance.config !== null &&
+    "agentId" in instance.config &&
+    instance.config.agentId === "brainharness"
+      ? BRAINHARNESS_CONNECTION_FIELDS
+      : (driverOption?.environmentFields ?? []);
   const environmentFieldNames = new Set(environmentFields.map((field) => field.name));
   const genericEnvironment = providerEnvironmentWithoutNames(
     instance.environment,

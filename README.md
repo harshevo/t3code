@@ -1,135 +1,47 @@
-# T3 Code
+# BrainHarness
 
-T3 Code is an "agent harness control surface". It enables control of the agents on your machine with a best-in-class mobile app ([iOS](https://apps.apple.com/us/app/t3-code-remote-claude-more/id6787819824), [Android](https://play.google.com/store/apps/details?id=com.t3tools.t3code)), [web app](https://app.t3.codes) and [Electron-based desktop app](https://t3.codes).
+A local coding and research workspace using the existing T3 Code React GUI, an extracted DeepSeek Harness host orchestrator, and the canonical BrainHarness Rust memory engine. The native desktop carrier is Tauri; it loads the same GUI as the local web server. The DeepSeek GUI and hosted services are not part of the application.
 
-Works with your subscriptions on Claude Code, Codex, Cursor, Grok Build, OpenCode, and Google Antigravity. If they're set up on your computer, T3 Code can control them.
+The project sidebar, chat, composer, model/effort controls, approval flow, terminal, file/diff review and preview tools come from the GUI base. Application login/signup has been removed. OpenAI/ChatGPT and other model-provider authentication remain available in Settings → Providers.
 
-## "Wait, what are you selling me?"
+## Build and run
 
-Nothing. We built T3 Code because we wanted the best possible development experience with agents. We were inspired by existing solutions like the Codex desktop app, Conductor, Claude Desktop and Cursor Glass, but none met our bar.
+This checkout belongs at `brainharness/vendor/t3code`, beside the Rust workspace in `brainharness/crates`. Requirements: Node 24 LTS, pnpm 11, Rust 1.89+, and the Tauri platform development prerequisites. On macOS, Node must include development headers for the native credential lock. Linux additionally needs `musl-gcc` for the extracted Landlock launcher. Windows native builds are not verified.
 
-We wanted something performant, remote-ready, and truly open. If we ever go the wrong direction, we want you to have everything you need to fork and build the editor that you want.
+```sh
+# From this directory, with Node 24 active:
+pnpm install --filter @brainharness/desktop --filter @brainharness/engine --filter @t3tools/web --filter t3 --filter @t3tools/monorepo --filter @t3tools/scripts
+pnpm run build:brainharness
 
-## Installation
+# Native desktop (development binary; macOS can also open start-brainharness.command):
+BH_NODE_BINARY="$(command -v node)" apps/brainharness/src-tauri/target/debug/brainharness-desktop
 
-> [!WARNING]
-> T3 Code currently supports Codex, Claude, Cursor, Grok Build, OpenCode, and Antigravity. Install and authenticate at least one provider before use:
->
-> - Codex: install [Codex CLI](https://developers.openai.com/codex/cli) and run `codex login`
-> - Claude: install [Claude Code](https://claude.com/product/claude-code) and run `claude auth login`
-> - Cursor: install [Cursor CLI](https://cursor.com/cli) and run `agent login`
-> - Grok Build: install [Grok Build CLI](https://x.ai/cli) and run `grok login`
-> - OpenCode: install [OpenCode](https://opencode.ai) and run `opencode auth login`
-> - Antigravity: enable it in Settings, then use **Install Antigravity** and **Sign in with Google**. No CLI is required.
-
-### Command line
-
-```bash
-curl -fsSL https://t3.codes/install.sh | sh
+# Same GUI served locally; prints a private pairing URL:
+pnpm run start:brainharness
 ```
 
-On Windows, in PowerShell:
+`BH_WORKSPACE` chooses the initial project. `BH_HOME` selects application data; web default is `~/.brainharness/t3`, and the native carrier defaults to its application-data directory. The live `~/.t3` directory is refused. `BH_MEMORY_BINARY` can select a separately built canonical Rust binary. `BH_PORT` selects a web-server port; desktop chooses a free loopback port.
 
-```powershell
-irm https://t3.codes/install.ps1 | iex
-```
+## Models and authentication
 
-Then run `t3` to start the server and open the local web app. `t3 service install` keeps it running in the background, `t3 update` moves to a newer release, and `t3 --help` has the full reference.
+Settings → Providers → BrainHarness exposes the provider route, model, protected API key, optional custom endpoint/protocol, context capacity and output limit. Built-in routes include OpenAI, ChatGPT/Codex, Anthropic, Google and OpenRouter. Custom gateways must declare a supported wire protocol and model limits; support is protocol-based, not a promise that every proprietary provider API is interchangeable.
 
-To try it once without installing, run `npx t3@latest` instead.
+Use the existing provider sign-in methods for OAuth. `openai-codex` is the extracted engine's ChatGPT/Codex OAuth route. The original GUI's Codex sign-in and other provider adapters are also retained. Successful real sign-in needs the user's browser interaction and account access. API credentials and OAuth tokens are handled by provider credential storage, not an application account. Local provider environment secrets use the server's secret handling; engine credential files use restricted permissions and exclusive writer locks.
 
-### Desktop app
+For scripted launches, `BH_PROVIDER`, `BH_MODEL`, `BH_API_KEY`, `BH_BASE_URL`, `BH_API`, `BH_CONTEXT_WINDOW` and `BH_MAX_TOKENS` configure the extracted engine. Never put keys in a committed file. DeepSeek-named provider routes and DeepSeek-hosted endpoints are rejected; they are excluded from model/auth discovery.
 
-Install the latest version of the desktop app from [GitHub Releases](https://github.com/pingdotgg/t3code/releases), or from your favorite package registry:
+## Memory, tools and metrics
 
-#### Windows (`winget`)
+The Rust service is built from the canonical `/crates/bh-memory`, `/crates/bh-core` and `/crates/bh-cognition` workspace. It captures original human requests and actual tool evidence, persists plans and user-quoted constraints, and recalls workspace-scoped state before model requests. Session resume uses the original ACP identity. File freshness and evidence hashes provide provenance; retrieved observations, plans and lessons remain untrusted data. No coding-performance superiority or automatic skill-learning claim is made.
 
-```bash
-winget install T3Tools.T3Code
-```
+The extracted host loop retains filesystem/search/patch tools, sandbox/approval services, shell jobs, MCP, skills, compaction, subagents, goals and workflows. Research uses HTTP fetching and optional Exa configuration. `BH_BROWSER_USE=1` mounts the Playwright MCP browser provider; `BH_COMPUTER_USE=1` mounts Cua Driver native computer use. These require their runtime/browser/OS prerequisites and are not enabled by default. The GUI's preview tools are a separate capability.
 
-#### macOS (Homebrew)
+The composer shows streaming output tokens/sec, cache-hit percentage with cached/inclusive input counts, output tokens and elapsed time. Expand it for input/output/cache-write/reasoning/context counts, first-token latency, model/tool calls, reported cost and usage scope. Unknown provider fields remain unavailable. Stream speed uses measured stream duration; a fallback is explicitly labelled whole-turn average. Child-agent usage is excluded from main-agent totals.
 
-```bash
-brew install --cask t3-code
-```
+Application analytics, anonymous identity and remote trace/metric exporters are disabled. Provider requests, configured research/MCP/browser/computer-use services and explicit integrations still contact their selected services. Local trace files and resource counters remain for diagnostics. The local data page explains this distinction.
 
-#### Debian, Ubuntu (`.deb`)
+## Validation and scope
 
-Download the `.deb` from [GitHub Releases](https://github.com/pingdotgg/t3code/releases), then:
+Build and focused regression checks cover provider authentication, ACP usage normalization, GUI metric math, native credential locks, Rust evidence persistence, mocked-model tool execution and isolated launcher readiness. Live account sign-in, native visual checks, browser automation and native computer use require separate interactive validation. This development executable requires the checkout and Node; signed portable installers, bundled Node and release updates are not configured.
 
-```bash
-sudo apt install ./T3-Code-*.deb
-```
-
-#### Arch Linux (AUR)
-
-Stable:
-
-```bash
-yay -S t3code-bin
-```
-
-Nightly:
-
-```bash
-yay -S t3code-nightly-bin
-```
-
-The AUR packaging is maintained in this repository under [`packaging/aur`](./packaging/aur).
-
-## Some notes
-
-We are very very early in this project. Expect bugs.
-
-We are (mostly) not accepting contributions yet. Small fixes may be considered. Big features will not be.
-
-## Documentation
-
-Full docs live in [docs/](./docs). There's no docs site yet.
-
-- [Install and first run](./docs/user/install.md)
-- [Permission modes](./docs/user/permission-modes.md)
-- [Keyboard shortcuts](./docs/user/keybindings.md)
-- [Project settings](./docs/user/project-settings.md)
-- [Appearance preferences](./docs/user/appearance.md)
-- [Remote access from a phone or another machine](./docs/user/remote-access.md)
-- [Connect Claude Code, Codex, ChatGPT and other agents over MCP](./docs/user/outside-agents.md)
-- [Keeping app and server in sync](./docs/user/updating.md)
-- [Source control integrations](./docs/user/source-control.md)
-- Multiple accounts: [Codex](./docs/user/providers-codex.md) · [Claude](./docs/user/providers-claude.md)
-- [Run T3 Code as a background service](./docs/user/background-service.md)
-
-Building from source? Start at [docs/internals/overview.md](./docs/internals/overview.md).
-
-## If you REALLY want to contribute still.... read this first
-
-### Install `vp`
-
-T3 Code uses Vite+ so you'll need to install the global `vp` command-line tool.
-
-#### macOS / Linux
-
-```bash
-curl -fsSL https://vite.plus | bash
-```
-
-#### Windows
-
-```bash
-irm https://vite.plus/ps1 | iex
-```
-
-Checkout their getting started guide for more information: https://viteplus.dev/guide/
-
-### Install dependencies
-
-```bash
-vp i
-```
-
-Read [CONTRIBUTING.md](./CONTRIBUTING.md) before reporting a bug or opening a PR.
-
-Have a feature request? Start an [Ideas discussion](https://github.com/pingdotgg/t3code/discussions/categories/ideas).
-
-Need support? Join the [Discord](https://discord.gg/jn4EGJjrvv).
+See [architecture](docs/brainharness-architecture.md) and [native entry](apps/brainharness/README.md). T3 Code and DeepSeek Harness license notices and internal package identifiers are retained for compatibility and attribution. `engine/vendor-list.json` pins extracted package provenance. Vendored declarations/generated protocol artifacts accompany source; `engine/build.mjs` regenerates runnable JavaScript and the host native primitives.

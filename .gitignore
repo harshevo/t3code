@@ -45,3 +45,9 @@ node_modules/
 
 # pnpm content-addressable store; never belongs in the repo.
 .pnpm-store/
+
+/apps/brainharness/src-tauri/target/
+/engine/native/system/.release/
+/engine/native/system/packages/*/bin/
+/engine/**/*.map
+/engine/**/lib/types/**/*.js

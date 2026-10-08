@@ -1722,3 +1722,47 @@ describe("embeddedTerminalIdsFromSessionUpdate", () => {
     ).toBeUndefined();
   });
 });
+
+it("preserves reported main-agent metrics while rejecting invalid counters", () => {
+  const parsed = parseSessionUpdateEvent({
+    sessionId: "session-1",
+    update: {
+      sessionUpdate: "usage_update",
+      used: 2500,
+      size: 10000,
+      _meta: {
+        brainharness: {
+          inputTokens: 100,
+          outputTokens: 20,
+          cachedInputTokens: 40,
+          cacheCreationTokens: 10,
+          contextEstimated: true,
+          decodeDurationMs: 500,
+          ttftMs: 250,
+          modelCallCount: 3,
+          reasoningOutputTokens: -5,
+          toolUses: "invalid",
+        },
+      },
+    },
+  });
+  expect(parsed.events[0]).toMatchObject({
+    _tag: "UsageUpdated",
+    usage: {
+      usedTokens: 2500,
+      maxTokens: 10000,
+      inputTokens: 100,
+      outputTokens: 20,
+      cachedInputTokens: 40,
+      cacheCreationTokens: 10,
+      contextEstimated: true,
+      decodeDurationMs: 500,
+      ttftMs: 250,
+      modelCallCount: 3,
+    },
+  });
+  if (parsed.events[0]?._tag === "UsageUpdated") {
+    expect(parsed.events[0].usage.reasoningOutputTokens).toBeUndefined();
+    expect(parsed.events[0].usage.toolUses).toBeUndefined();
+  }
+});

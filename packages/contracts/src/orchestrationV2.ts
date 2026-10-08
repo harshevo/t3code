@@ -974,6 +974,19 @@ export const OrchestrationV2ProviderTurnTokenUsage = Schema.Struct({
   cachedInputTokens: Schema.optional(NonNegativeInt),
   outputTokens: Schema.optional(NonNegativeInt),
   reasoningOutputTokens: Schema.optional(NonNegativeInt),
+  cacheCreationTokens: Schema.optional(NonNegativeInt),
+  contextEstimated: Schema.optional(Schema.Boolean),
+  decodeDurationMs: Schema.optional(NonNegativeInt),
+  modelCallCount: Schema.optional(NonNegativeInt),
+  toolUses: Schema.optional(NonNegativeInt),
+  ttftMs: Schema.optional(NonNegativeInt),
+  durationMs: Schema.optional(NonNegativeInt),
+  cost: Schema.optional(
+    Schema.Struct({
+      amount: Schema.Number.check(Schema.isFinite()),
+      currency: Schema.String,
+    }),
+  ),
   /** ISO timestamp of the provider's report; string so wire encoding is stable. */
   updatedAt: Schema.String,
 });

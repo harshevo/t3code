@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "module": "NodeNext",
+    "target": "ES2024",
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "types": ["node"]
+  },
+  "include": [
+    "packages/acp/acp/src/**/*.ts",
+    "packages/experimental/brainharness-memory/src/index.ts",
+    "packages/llm/llm-pi-ai/src/config.ts",
+    "packages/llm/llm-pi-ai/src/catalog.ts"
+  ]
+}

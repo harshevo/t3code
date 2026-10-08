@@ -1,5 +1,9 @@
 packages:
   - apps/*
+  - engine
+  - engine/packages/*/*
+  - engine/vendor/*
+  - engine/native/system/packages/*
   - infra/*
   - oxlint-plugin-t3code
   - packages/*
@@ -9,6 +13,9 @@ packages:
 # true = allowed to run build scripts; false mirrors the pnpm 10 behavior
 # where anything outside onlyBuiltDependencies was silently not built.
 allowBuilds:
+  "@google/genai": false
+  koffi: true
+  protobufjs: true
   browser-tabs-lock: false
   bufferutil: false
   core-js: false
