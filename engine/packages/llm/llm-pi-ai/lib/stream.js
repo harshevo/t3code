@@ -25,6 +25,19 @@ import { toPiReplayState } from "./replay.js";
  *   when non-zero (pi-ai reports zeros, not absence).
  */
 export function mapUsage(usage) {
+  const counters = [
+    usage.input,
+    usage.output,
+    usage.cacheRead,
+    usage.cacheWrite,
+    usage.totalTokens,
+  ];
+  // pi-ai initializes omitted usage to zero; it is not a provider billing report.
+  if (
+    !counters.every((value) => Number.isSafeInteger(value) && value >= 0) ||
+    !counters.some((value) => value > 0)
+  )
+    return undefined;
   return {
     inputTokens: usage.input,
     outputTokens: usage.output,
@@ -228,18 +241,21 @@ export async function* toStreamChunks(events, contextWindow, callerSignal, reque
           },
         };
         break;
-      case "done":
-        yield { type: "usage", usage: mapUsage(event.message.usage) };
+      case "done": {
+        const usage = mapUsage(event.message.usage);
+        if (usage !== undefined) yield { type: "usage", usage };
         yield {
           type: "finish",
           reason: mapStopReason(event.message, contextWindow),
           replayState: toPiReplayState(event.message, requestedModel),
         };
         return;
-      case "error":
+      }
+      case "error": {
         // In-stream error delivery (pi-ai's style) → error finish chunk
         // (the harness's other sanctioned error path besides throwing).
-        yield { type: "usage", usage: mapUsage(event.error.usage) };
+        const usage = mapUsage(event.error.usage);
+        if (usage !== undefined) yield { type: "usage", usage };
         yield {
           type: "finish",
           reason: mapStopReason(
@@ -248,6 +264,7 @@ export async function* toStreamChunks(events, contextWindow, callerSignal, reque
           ),
         };
         return;
+      }
       // no default: AssistantMessageEvent is pi-ai's closed union; a new
       // event type should fail compilation here via tsc's exhaustiveness
       // when one is added (switch covers all current variants).

@@ -25,3 +25,15 @@ test("model discovery retains supported providers without advertising a DeepSeek
   assert.ok(ids.includes("anthropic"));
   assert.ok(ids.every((id) => !id.toLowerCase().includes("deepseek")));
 });
+
+import { mapUsage } from "../packages/llm/llm-pi-ai/lib/stream.js";
+test("omitted SDK usage defaults and invalid counters stay unavailable", () => {
+  const zero = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, totalTokens: 0 };
+  assert.equal(mapUsage(zero), undefined);
+  assert.equal(mapUsage({ ...zero, input: -1 }), undefined);
+  assert.deepEqual(mapUsage({ ...zero, input: 100, output: 20, totalTokens: 120 }), {
+    inputTokens: 100,
+    outputTokens: 20,
+    totalTokens: 120,
+  });
+});

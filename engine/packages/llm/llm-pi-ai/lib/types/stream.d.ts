@@ -19,7 +19,7 @@ import type {
  * @returns harness counts with pi-ai's exact total; cache fields appear only
  *   when non-zero (pi-ai reports zeros, not absence).
  */
-export declare function mapUsage(usage: PiUsage): TokenUsage;
+export declare function mapUsage(usage: PiUsage): TokenUsage | undefined;
 /**
  * Map a terminal pi-ai event to the harness finish reason.
  * @param message - the assistant message carried by the `done` or `error` event.
